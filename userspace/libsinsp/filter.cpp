@@ -1077,6 +1077,8 @@ void sinsp_filter_expression::parse(string expr)
 {
 }
 
+int32_t g_last_id = -1;
+
 bool sinsp_filter_expression::compare(sinsp_evt *evt)
 {
 	uint32_t j;
@@ -1095,6 +1097,9 @@ bool sinsp_filter_expression::compare(sinsp_evt *evt)
 			{
 			case BO_NONE:
 				res = chk->compare(evt);
+				if (res) {
+					g_last_id = chk->get_check_id();
+				}
 				break;
 			case BO_NOT:
 				res = !chk->compare(evt);
@@ -1114,6 +1119,9 @@ bool sinsp_filter_expression::compare(sinsp_evt *evt)
 					goto done;
 				}
 				res = chk->compare(evt);
+				if (res) {
+					g_last_id = chk->get_check_id();
+				}
 				break;
 			case BO_AND:
 				if(!res)
@@ -1121,6 +1129,9 @@ bool sinsp_filter_expression::compare(sinsp_evt *evt)
 					goto done;
 				}
 				res = chk->compare(evt);
+				if (res) {
+					g_last_id = chk->get_check_id();
+				}
 				break;
 			case BO_ORNOT:
 				if(res)
@@ -1128,6 +1139,9 @@ bool sinsp_filter_expression::compare(sinsp_evt *evt)
 					goto done;
 				}
 				res = !chk->compare(evt);
+				if (res) {
+					g_last_id = chk->get_check_id();
+				}
 				break;
 			case BO_ANDNOT:
 				if(!res)
@@ -1135,6 +1149,9 @@ bool sinsp_filter_expression::compare(sinsp_evt *evt)
 					goto done;
 				}
 				res = !chk->compare(evt);
+				if (res) {
+					g_last_id = chk->get_check_id();
+				}
 				break;
 			default:
 				ASSERT(false);
@@ -1143,13 +1160,9 @@ bool sinsp_filter_expression::compare(sinsp_evt *evt)
 		}
 	}
  done:
-	if(res)
+	if(res && g_last_id != -1)
 	{
-		int32_t id = chk->get_check_id();
-		if(id >= 0)
-		{
-			evt->set_check_id(id);
-		}
+		evt->set_check_id(g_last_id);
 	}
 
 	return res;
@@ -1195,6 +1208,7 @@ bool sinsp_filter::run(sinsp_evt *evt)
 {
 	//	printf("m_filter: %p", (void*) m_filter);
 	//	ASSERT(m_filter != NULL);
+	g_last_id = -1;
 	return m_filter->compare(evt);
 }
 
